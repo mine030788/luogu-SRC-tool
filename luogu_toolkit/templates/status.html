@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录中... · luogu-toolkit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+        .card { background: white; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.06); }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .6; } }
+        .pulse { animation: pulse 1.5s ease-in-out infinite; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 to-indigo-50 min-h-screen p-6 flex items-center justify-center">
+    <div class="card max-w-lg w-full p-8">
+        <div class="text-center mb-6">
+            <div class="text-5xl mb-2 pulse">🔐</div>
+            <h1 class="text-2xl font-extrabold text-slate-800">正在登录</h1>
+            <p class="text-sm text-slate-500 mt-1">Session: <code class="text-xs">{{ session_id[:8] }}...</code></p>
+        </div>
+
+        <!-- 进度条 -->
+        <div class="mb-4">
+            <div class="flex items-center justify-between text-xs text-slate-500 mb-1">
+                <span id="stateLabel">启动中...</span>
+                <span id="attemptLabel"></span>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-2">
+                <div id="progressBar" class="bg-indigo-600 h-2 rounded-full transition-all duration-500" style="width: 10%"></div>
+            </div>
+        </div>
+
+        <div id="statusMsg" class="text-center text-sm text-slate-600 mb-4">⏳ 正在打开浏览器...</div>
+
+        <!-- 2FA 输入框 (need_2fa 状态时显示) -->
+        <div id="twofaBox" class="hidden border-2 border-amber-300 bg-amber-50 rounded-xl p-4 mt-4">
+            <div class="text-sm font-bold text-amber-800 mb-2">🔐 账号开启了 2FA, 请输入 6 位验证码</div>
+            <form id="twofaForm" class="flex gap-2">
+                <input name="totp_code" type="text" inputmode="numeric" pattern="\d{6}" maxlength="6" required
+                       placeholder="123456"
+                       class="flex-1 px-4 py-2 text-center text-xl font-mono tracking-widest border-2 border-amber-300 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
+                <button type="submit" class="px-5 py-2 bg-amber-600 text-white font-bold rounded-lg hover:bg-amber-700">提交</button>
+            </form>
+        </div>
+
+        <!-- 完成态 (done) -->
+        <div id="doneBox" class="hidden border-2 border-emerald-300 bg-emerald-50 rounded-xl p-4 mt-4 text-center">
+            <div class="text-2xl mb-2">✅</div>
+            <div class="text-base font-bold text-emerald-800 mb-1">登录成功!</div>
+            <div class="text-sm text-emerald-700">UID: <code id="doneUid" class="font-mono"></code></div>
+            <div class="text-xs text-emerald-600 mt-2">cookies 已落盘到 <code>~/.luogu-toolkit/cookies.json</code></div>
+            <div id="verifyAfter" class="mt-3 text-xs"></div>
+            <div class="mt-4 flex gap-2 justify-center flex-wrap">
+                <a href="/data" class="px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700">📥 去下载我的数据 →</a>
+                <a href="/" class="px-4 py-2 bg-slate-200 text-slate-700 text-sm font-bold rounded-lg hover:bg-slate-300">← 返回首页</a>
+            </div>
+        </div>
+
+        <!-- 失败态 -->
+        <div id="failBox" class="hidden border-2 border-red-300 bg-red-50 rounded-xl p-4 mt-4 text-center">
+            <div class="text-2xl mb-2">❌</div>
+            <div class="text-base font-bold text-red-800 mb-1">登录失败</div>
+            <div class="text-sm text-red-700" id="failMsg"></div>
+            <a href="/login" class="inline-block mt-4 px-4 py-2 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700">← 重试</a>
+        </div>
+    </div>
+
+    <script>
+    const SID = {{ session_id|tojson }};
+    const stateLabel = document.getElementById('stateLabel');
+    const attemptLabel = document.getElementById('attemptLabel');
+    const progressBar = document.getElementById('progressBar');
+    const statusMsg = document.getElementById('statusMsg');
+    const twofaBox = document.getElementById('twofaBox');
+    const doneBox = document.getElementById('doneBox');
+    const failBox = document.getElementById('failBox');
+
+    function setProgress(state) {
+        const map = {
+            'starting': 15, 'captcha': 30, 'submitting': 50,
+            'need_2fa': 60, 'submitted_2fa': 70, 'done': 100,
+            'failed': 100, 'expired': 100,
+        };
+        const w = map[state] || 25;
+        progressBar.style.width = w + '%';
+        stateLabel.textContent = ({
+            'starting': '启动中',
+            'captcha': '验证码识别中',
+            'submitting': '提交登录',
+            'need_2fa': '等待 2FA',
+            'submitted_2fa': '2FA 验证中',
+            'done': '完成',
+            'failed': '失败',
+            'expired': '已过期',
+        })[state] || state;
+    }
+
+    let pollTimer = null;
+
+    async function poll() {
+        try {
+            const r = await fetch('/api/login/status?sid=' + encodeURIComponent(SID));
+            const d = await r.json();
+
+            setProgress(d.state);
+            statusMsg.textContent = d.message || '';
+
+            if (d.captcha_attempts > 0) {
+                attemptLabel.textContent = `验证码 ${d.captcha_attempts}/6`;
+            }
+
+            if (d.state === 'need_2fa') {
+                twofaBox.classList.remove('hidden');
+                doneBox.classList.add('hidden');
+                failBox.classList.add('hidden');
+            } else if (d.state === 'done') {
+                twofaBox.classList.add('hidden');
+                failBox.classList.add('hidden');
+                doneBox.classList.remove('hidden');
+                document.getElementById('doneUid').textContent = d.luogu_uid || '?';
+                if (pollTimer) clearInterval(pollTimer);
+                // 登录成功 → 自动 verify 拿状态
+                autoVerify();
+            } else if (d.state === 'failed' || d.state === 'expired') {
+                twofaBox.classList.add('hidden');
+                doneBox.classList.add('hidden');
+                failBox.classList.remove('hidden');
+                document.getElementById('failMsg').textContent = d.error || d.message || '未知错误';
+                if (pollTimer) clearInterval(pollTimer);
+            }
+        } catch (err) {
+            statusMsg.textContent = '⚠️ 轮询失败: ' + err.message;
+        }
+    }
+
+    // 提交 2FA
+    document.getElementById('twofaForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        fd.append('sid', SID);
+        try {
+            const r = await fetch('/api/login/2fa', { method: 'POST', body: fd });
+            const d = await r.json();
+            if (d.state === 'submitted_2fa' || d.state === 'need_2fa') {
+                statusMsg.textContent = '2FA 已提交, 验证中...';
+                twofaBox.classList.add('hidden');
+            } else if (d.state === 'done') {
+                setProgress('done');
+                statusMsg.textContent = '登录成功';
+                twofaBox.classList.add('hidden');
+                doneBox.classList.remove('hidden');
+                document.getElementById('doneUid').textContent = d.luogu_uid || '?';
+                if (pollTimer) clearInterval(pollTimer);
+                autoVerify();
+            } else if (d.error) {
+                failBox.classList.remove('hidden');
+                document.getElementById('failMsg').textContent = d.error;
+                if (pollTimer) clearInterval(pollTimer);
+            }
+        } catch (err) {
+            failBox.classList.remove('hidden');
+            document.getElementById('failMsg').textContent = err.message;
+        }
+    });
+
+    // 启动轮询
+    poll();
+    pollTimer = setInterval(poll, 1000);
+
+    // 登录成功后自动 verify
+    async function autoVerify() {
+        const v = document.getElementById('verifyAfter');
+        v.innerHTML = '<span class="text-slate-500">⏳ 校验中...</span>';
+        try {
+            const r = await fetch('/api/verify');
+            const d = await r.json();
+            if (d.ok) {
+                v.innerHTML = '<span class="text-emerald-700">✅ 校验通过 — username <code>' + (d.username || '?') + '</code>, name <code>' + (d.name || '?') + '</code></span>';
+            } else if (d.error === 'expired') {
+                v.innerHTML = '<span class="text-red-700">❌ 刚保存的 cookies 居然已失效, 试手动填</span>';
+            } else if (d.error && d.error.includes('pyLuogu')) {
+                v.innerHTML = '<span class="text-amber-700">⚠️ cookies 已保存, 但 pyLuogu 未装, 无法深度校验 — 装: <code>pip install luogu-toolkit[fetch]</code></span>';
+            } else if (d.error === 'network') {
+                v.innerHTML = '<span class="text-amber-700">⚠️ 网络/接口问题, 暂无法校验: <code class="text-xs">' + (d.message || 'no detail').replace(/</g, '&lt;') + '</code></span>';
+            } else {
+                v.innerHTML = '<span class="text-amber-700">⚠️ 校验状态: ' + (d.error || 'unknown') + '</span>';
+            }
+        } catch (err) {
+            v.innerHTML = '<span class="text-red-700">❌ verify 请求失败: ' + err.message + '</span>';
+        }
+    }
+    </script>
+</body>
+</html>
