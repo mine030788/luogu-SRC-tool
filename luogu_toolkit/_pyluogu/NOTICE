@@ -1,0 +1,37 @@
+NOTICE — _pyluogu (内嵌版 pyLuogu)
+========================================
+
+本目录下所有源代码是从以下上游项目同步而来的 vendored 副本：
+
+    pyLuogu
+    上游地址: https://github.com/NekoOS-Group/luogu-api-python (pyLuogu/ 子目录)
+    上游版权: NekoOS-Group 及贡献者所有
+    同步日期: 2026-06
+
+为什么内嵌
+----------
+1. pyLuogu 不是 pip 可安装的包（无 setup.py / pyproject.toml）
+2. 不在 PyPI 上发布
+3. 用户在另一台电脑 / Docker 部署时, 没法 `pip install pyLuogu`
+4. 内嵌后, 装 luogu-toolkit 就自带 pyLuogu, 开箱即用
+
+和上游的差异
+------------
+- 包名: pyLuogu → luogu_toolkit._pyluogu
+- 默认日志级别: WARNING → ERROR (减少噪音)
+- 不再自动添加 console_handler (避免污染用户日志)
+- 同步时未做任何业务逻辑改动
+
+升级方式
+--------
+当上游 pyLuogu 有新版本时:
+1. cd 到上游仓库
+2. git pull
+3. 用 `copy_pyluogu.py` (在 luogu-toolkit 根) 重新同步
+4. 跑测试确保没破
+5. 提交并推送 luogu-toolkit
+
+授权
+----
+遵守上游项目的开源协议 (请查阅上游仓库的 LICENSE)。
+luogu-toolkit 本身是 MIT, 但本目录下的源码是上游作者的版权。
