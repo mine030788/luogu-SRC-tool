@@ -1,0 +1,30 @@
+# Docker 构建缓存优化
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# 用户数据 (绝不打进镜像 — cookies.json 落盘到 volume)
+data/
+*.cookies.json
+cookies*.json
+.cookies/
+.luogu-toolkit/
+
+# Playwright 浏览器 (镜像内已 install, 避免重打包)
+.cache/
+ms-playwright/
+
+# IDE / 编辑器
+.idea/
+.vscode/
+*.swp
+.DS_Store
