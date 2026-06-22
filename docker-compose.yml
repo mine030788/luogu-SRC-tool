@@ -1,0 +1,51 @@
+# luogu-toolkit · Docker Compose
+# 用法:
+#   docker compose up -d            # 后台启动
+#   docker compose logs -f           # 看日志
+#   docker compose down             # 停止
+#   浏览器访问 http://localhost:9876/
+#
+# 数据持久化:
+#   cookies.json 落盘到 ./data/, 重启容器不丢
+#
+version: "3.8"
+
+services:
+  luogu-toolkit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: luogu-toolkit:0.1.0
+    container_name: luogu-toolkit
+    restart: unless-stopped
+
+    # 端口映射: 主机 9876 → 容器 9876
+    ports:
+      - "9876:9876"
+
+    # 数据卷: 容器 /data 挂到主机 ./data, cookies.json 落盘持久化
+    volumes:
+      - ./data:/data
+
+    # 环境变量 (可选)
+    environment:
+      # - TZ=Asia/Shanghai
+      # - LUOGU_TOOLKIT_SECRET=改成你的随机字符串
+      - PYTHONIOENCODING=utf-8
+
+    # 资源限制 (按需调整)
+    # 跑 Chromium 的 OCR + Playwright 内存大头, 建议 1G+
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
+    # 健康检查 (与 Dockerfile 内置一致, compose 也可单独覆盖)
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9876/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
