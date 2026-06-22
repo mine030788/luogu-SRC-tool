@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>洛谷 AI 学习测评报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm 15mm 20mm 15mm;
+            @bottom-right {
+                content: "Page " counter(page);
+                font-size: 10px;
+                color: #6b7280;
+            }
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            color: #333;
+            line-height: 1.6;
+        }
+        .page-break {
+            page-break-before: always;
+        }
+        .cover-page {
+            height: 250mm;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            border: 1px solid #e5e7eb;
+        }
+        th, td {
+            border: 1px solid #e5e7eb;
+            padding: 10px 12px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        .markdown-content h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #1e3a8a;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+        }
+        .markdown-content h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #1e40af;
+        }
+        .markdown-content h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: #1d4ed8;
+        }
+        .markdown-content p {
+            margin-bottom: 1rem;
+        }
+        .markdown-content ul {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .markdown-content pre {
+            background-color: #f3f4f6;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+        }
+        .markdown-content code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            background-color: #f3f4f6;
+            padding: 0.1rem 0.3rem;
+            border-radius: 0.25rem;
+            font-size: 0.9em;
+        }
+        .markdown-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .markdown-content .text-blue-700 {
+            color: #1d4ed8;
+        }
+        .markdown-content .font-semibold {
+            font-weight: 600;
+        }
+        .markdown-content p.text-blue-700.font-semibold {
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 0.75rem 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 0.375rem 0.375rem 0;
+        }
+    </style>
+</head>
+<body class="bg-white">
+    
+
+    <!-- 封面页 -->
+    <div class="cover-page text-center">
+        <h1 class="text-4xl font-bold text-blue-900 mb-4">洛谷 AI 学习测评报告</h1>
+        <h2 class="text-xl text-gray-600 mb-12">Coach Edition · 图表化诊断 / 教练反馈 / 训练规划</h2>
+        
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-8 w-3/4 max-w-lg shadow-sm mb-12 text-left">
+            <h3 class="text-lg font-bold text-blue-800 border-b border-blue-200 pb-2 mb-4">测评基础信息</h3>
+            <div class="grid grid-cols-2 gap-4 text-gray-700">
+                <div><span class="font-semibold">选手姓名：</span></div>
+                <div><span class="font-semibold">测评时间：</span></div>
+                <div><span class="font-semibold">所属学校：</span></div>
+                <div><span class="font-semibold">当前年级：</span>JUNIOR_1</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-4 gap-4 w-full px-12 mb-8">
+            <div class="bg-gray-50 border border-gray-200 rounded p-4 text-center">
+                <div class="text-sm text-gray-500 mb-1">已通过题数</div>
+                <div class="text-2xl font-bold text-gray-800"></div>
+            </div>
+            <div class="bg-gray-50 border border-gray-200 rounded p-4 text-center">
+                <div class="text-sm text-gray-500 mb-1">未通过题数</div>
+                <div class="text-2xl font-bold text-gray-800"></div>
+            </div>
+            <div class="bg-gray-50 border border-gray-200 rounded p-4 text-center">
+                <div class="text-sm text-gray-500 mb-1">平均难度</div>
+                <div class="flex flex-col items-center gap-2">
+                    <span class="px-3 py-1 rounded-full text-sm font-bold" style="background: #9CA3AF; color: #111827;">暂无评定</span>
+                    <div class="text-xl font-bold text-gray-800">0.0</div>
+                </div>
+            </div>
+            <div class="bg-gray-50 border border-gray-200 rounded p-4 text-center">
+                <div class="text-sm text-gray-500 mb-1">高频标签</div>
+                <div class="text-lg font-bold text-gray-800 mt-1">暂无</div>
+            </div>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-lg p-5 w-full max-w-6xl shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-bold text-gray-800">提交详情抓取概览</h3>
+                <span class="px-3 py-1 rounded-full text-sm font-bold" style="background: #E5E7EB; color: #374151;">未抓取详情</span>
+            </div>
+            <div class="grid grid-cols-4 gap-4 text-center">
+                <div class="bg-green-50 border border-green-200 rounded p-3">
+                    <div class="text-xs text-green-700 mb-1">源码详情成功</div>
+                    <div class="text-xl font-bold text-green-800">0</div>
+                </div>
+                <div class="bg-blue-50 border border-blue-200 rounded p-3">
+                    <div class="text-xs text-blue-700 mb-1">摘要保底</div>
+                    <div class="text-xl font-bold text-blue-800">0</div>
+                </div>
+                <div class="bg-amber-50 border border-amber-200 rounded p-3">
+                    <div class="text-xs text-amber-700 mb-1">阻断后跳过</div>
+                    <div class="text-xl font-bold text-amber-800">0</div>
+                </div>
+                <div class="bg-red-50 border border-red-200 rounded p-3">
+                    <div class="text-xs text-red-700 mb-1">纯错误记录</div>
+                    <div class="text-xl font-bold text-red-800">0</div>
+                </div>
+            </div>
+            <div class="mt-4 text-sm text-gray-600 text-left">
+                <span class="font-semibold">阻断原因：</span>无
+            </div>
+        </div>
+    </div>
+
+    <!-- 目录页 -->
+    <div class="page-break">
+        <h1 class="text-2xl font-bold text-blue-900 mb-6 border-b pb-2">报告目录</h1>
+        <ul class="space-y-4 text-lg text-gray-700 ml-4">
+            <li>1. 核心数据概览与图表化分析</li>
+            <li>2. 综合能力雷达表与诊断</li>
+            <li>3. 考纲精准定级与知识点盲区</li>
+            <li>4. 风险诊断与训练闭环表</li>
+            <li>5. 代码质量与工程习惯</li>
+            <li>6. 定制训练题单</li>
+            <li>7. 错题单页题解与复盘（含 AI 题解摘要与推荐同类题）</li>
+        </ul>
+    </div>
+
+    <!-- 图表分析页 -->
+    <div class="page-break">
+        <h1 class="text-2xl font-bold text-blue-900 mb-6 border-b pb-2">1. 核心数据概览与图表化分析</h1>
+        <div class="grid grid-cols-2 gap-8 mb-8">
+            
+            <div class="text-center">
+                <img src="assets/ability_radar.png" class="mx-auto" style="max-height: 250px;" alt="能力雷达图">
+                <p class="text-sm text-gray-500 mt-2">图 1：能力雷达图</p>
+            </div>
+            
+            
+            
+            
+            
+            <div class="text-center">
+                <img src="assets/status_ratio.png" class="mx-auto" style="max-height: 250px;" alt="通过/未通过占比">
+                <p class="text-sm text-gray-500 mt-2">图 5：通过/未通过占比</p>
+            </div>
+            
+            
+        </div>
+    </div>
+
+    <!-- AI 报告正文 -->
+    <div class="page-break markdown-content">
+        <p>好的，教练已就位。以下是为学员张张（VJudge ID: Alan453031711）生成的跨平台 AI 测评报告。</p>
+<hr />
+<h1>🧑‍🎓 学员张张 · VJudge 跨平台 AI 测评报告</h1>
+<p><strong>报告生成时间</strong>：2026-06-20 08:08:41
+<strong>报告适用对象</strong>：入门期学员及家长
+<strong>核心结论</strong>：学员处于编程竞赛的<strong>绝对起步阶段</strong>。当前数据量极少，如同一张白纸，未来方向的选择和习惯的建立至关重要。</p>
+<hr />
+<h2>1. 【学员概览】</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">项目</th>
+<th style="text-align: left;">详情</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>姓名</strong></td>
+<td style="text-align: left;">张张</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>年级</strong></td>
+<td style="text-align: left;">香港 · 初中一年级</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>VJudge ID</strong></td>
+<td style="text-align: left;"><a href="https://vjudge.net/user/Alan453031711">Alan453031711</a></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>总 AC 数</strong></td>
+<td style="text-align: left;">🟢 1</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>总提交数</strong></td>
+<td style="text-align: left;">🔵 1</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>AC 率</strong></td>
+<td style="text-align: left;">🟢 <strong>100.0%</strong> (1/1)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>活跃 OJ 数</strong></td>
+<td style="text-align: left;">🔴 0 (或 1，数据未区分)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>2. 【VJudge 跨平台画像】</h2>
+<p>由于学员仅有一次提交记录，VJudge 新版未提供该次提交的 OJ 来源及已解决题列表。以下为基于现有信息的画像推断。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">OJ 平台</th>
+<th style="text-align: left;">AC 数量</th>
+<th style="text-align: left;">状态与解读</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>所有 OJ</strong></td>
+<td style="text-align: left;"><strong>1</strong></td>
+<td style="text-align: left;"><img src="https://img.shields.io/badge/Total-1-blue" alt="Total AC" /></td>
+</tr>
+<tr>
+<td style="text-align: left;"><em>单一 OJ 未明确</em></td>
+<td style="text-align: left;">N/A</td>
+<td style="text-align: left;">无法获取具体分布，判定为<strong>单点尝试阶段</strong>。</td>
+</tr>
+</tbody>
+</table>
+<p class="text-blue-700 font-semibold">解读：学员当前还未形成跨平台刷题的习惯。首次提交精准命中并一次 AC，展现了良好的第一印象。当前最重要的任务不是“跨平台”，而是在单一平台上完成从0到50题的积累，熟悉评测环境与基础题型。</p>
+
+<hr />
+<h2>3. 【提交效率分析】</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">指标</th>
+<th style="text-align: left;">数值</th>
+<th style="text-align: left;">状态</th>
+<th style="text-align: left;">阶段定性</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>提交/AC 比</strong></td>
+<td style="text-align: left;"><strong>1.0</strong></td>
+<td style="text-align: left;">🟢 <strong>极优</strong></td>
+<td style="text-align: left;"><strong>新手观察期</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>总 AC 数</strong></td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">🟠 <strong>极低</strong></td>
+<td style="text-align: left;">绝对起步</td>
+</tr>
+</tbody>
+</table>
+<p class="text-blue-700 font-semibold">解读：1 次提交即获 1 次 AC，表面看是‘高效型’选手。但这建立在极小的样本量上，具有偶然性。本质上，学员仍处于‘新手期’。在初期，过于追求一次 AC 可能导致畏难情绪，不敢尝试中等难度题目。</p>
+
+<p><strong>给学员的建议：</strong>
+1.  <strong>放下 100% AC 率的包袱</strong>：在起步阶段，提交/AC 比在 1.5 - 3.0 之间是完全健康和正常的。关键是<strong>通过提交来学习</strong>，而非单纯验证答案。
+2.  <strong>增加试错频率</strong>：鼓励学员在遇到困难题时，先提交一次自己的思考结果，哪怕它是错的。通过错误信息（Wrong Answer, Time Limit Exceeded）来修正思路，是成长的必经之路。</p>
+<hr />
+<h2>4. 【已解决题列表(精选 10-20 条)】</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">OJ</th>
+<th style="text-align: left;">题号</th>
+<th style="text-align: left;">标题</th>
+<th style="text-align: left;">AC 时间</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">未知</td>
+<td style="text-align: left;">未知</td>
+<td style="text-align: left;">未知</td>
+<td style="text-align: left;">未知</td>
+</tr>
+</tbody>
+</table>
+<p class="text-blue-700 font-semibold">解读：由于 VJudge 新版限制及数据量过少，无法获取已解决题目的具体信息。这恰好印证了学员正处于从‘0到1’突破后的第一个十字路口。这一道题的领域（如基础语法、数学计算、简单模拟）基本决定了学员的兴趣起点，我们将在后续训练中帮助其拓展。</p>
+
+<hr />
+<h2>5. 【水平研判】</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">评估维度</th>
+<th style="text-align: left;">当前等级</th>
+<th style="text-align: left;">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>知识技能</strong></td>
+<td style="text-align: left;">🟢 <strong>入门</strong></td>
+<td style="text-align: left;">掌握了程序的基本输入输出与编译运行能力。</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>题库积累</strong></td>
+<td style="text-align: left;">🔴 <strong>起始</strong></td>
+<td style="text-align: left;">AC 1 题，尚未形成对算法和数据结构的基本认知。</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>竞赛状态</strong></td>
+<td style="text-align: left;">🟢 <strong>有兴趣</strong></td>
+<td style="text-align: left;">已开始在 OJ 平台活动，有明确的竞赛意愿。</td>
+</tr>
+</tbody>
+</table>
+<p class="text-blue-700 font-semibold">解读：学员当前处于洛谷难度评级中的‘入门’阶段。这是打地基的黄金时期，方向远比速度重要。</p>
+
+<p><strong>最值得投入的方向建议：</strong>
+<strong>固定一个主战场：强烈建议选择「洛谷」作为核心训练平台。</strong> 原因如下：
+*   <strong>中文题干</strong>：对母语为中文的学员最友好，学习门槛最低。
+*   <strong>题单系统</strong>：洛谷有完善的“官方题单”（如【入门1】顺序结构），提供了高度结构化的学习路径，避免了初学者面对题海无从下手的困境。
+*   <strong>活跃社区</strong>：题解丰富，评测环境稳定。建议将后续所有练习集中在此平台，方便追踪成长轨迹。</p>
+<hr />
+<h2>6. 【后续 4 周训练计划(可执行版)】</h2>
+<p><strong>主战场 OJ：<a href="https://www.luogu.com.cn/">洛谷 (Luogu)</a></strong>
+<strong>训练强度</strong>：每周 2-3 次，每次 1-2 小时，重在理解与坚持。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">周次</th>
+<th style="text-align: left;">主题</th>
+<th style="text-align: left;">目标 OJ</th>
+<th style="text-align: center;">题目数量</th>
+<th style="text-align: left;">推荐题型</th>
+<th style="text-align: left;">验收标准</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><strong>W1</strong></td>
+<td style="text-align: left;"><strong>C++ 基础巩固</strong></td>
+<td style="text-align: left;">洛谷</td>
+<td style="text-align: center;"><strong>10 题</strong></td>
+<td style="text-align: left;">顺序结构、变量与输入输出、基本运算</td>
+<td style="text-align: left;">AC 率 ≥ 80% (8/10)，完成【入门1】题单。</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>W2</strong></td>
+<td style="text-align: left;"><strong>分支结构</strong></td>
+<td style="text-align: left;">洛谷</td>
+<td style="text-align: center;"><strong>10 题</strong></td>
+<td style="text-align: left;">if-else 判断、逻辑表达式、多分支嵌套</td>
+<td style="text-align: left;">AC 率 ≥ 70% (7/10)，能独立理清 3 层以上的判断逻辑。</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>W3</strong></td>
+<td style="text-align: left;"><strong>循环结构入门</strong></td>
+<td style="text-align: left;">洛谷</td>
+<td style="text-align: center;"><strong>8 题</strong></td>
+<td style="text-align: left;">for/while 循环、循环求和、简单计数</td>
+<td style="text-align: left;">AC 率 ≥ 60% (5/8)，理解循环变量与控制条件。</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>W4</strong></td>
+<td style="text-align: left;"><strong>循环与基础算法</strong></td>
+<td style="text-align: left;">洛谷</td>
+<td style="text-align: center;"><strong>7 题</strong></td>
+<td style="text-align: left;">循环嵌套、简单枚举、最大公约数<em>、素数判断</em></td>
+<td style="text-align: left;">独立完成 2 道“普及-”难度标*题，不畏惧双重循环。</td>
+</tr>
+</tbody>
+</table>
+<p class="text-blue-700 font-semibold">解读：计划遵循洛谷官方题单的渐进式结构。前两周聚焦于语法细节，从“写对”到“理解”。后两周引入循环，这是编程思维从“线性执行”到“迭代处理”的关键飞跃。验收标准中的 AC 率逐渐降低，是为了鼓励学员挑战更高难度的题目，接受合理的失败。</p>
+
+<hr />
+<h2>7. 【家长可见的总结】</h2>
+<p>张张同学已经成功开启了编程竞赛的第一步，他/她能够独立编写代码并一次通过评测，展现了非常好的潜力和严谨的学习态度。目前孩子正处于知识体系搭建的初始阶段，就像刚开始学习写字，重要的不是字写得多漂亮，而是掌握正确的握笔姿势和笔画顺序。未来一个月，我们的核心任务是在一个固定的中文平台上，按照系统的学习路线，从简单的程序开始，逐步建立对“循环”、“判断”等核心概念的理解，积累起最初的 30 多道题目。这个过程，我们重在保护孩子的兴趣，同时培养他/她通过错误信息去修正问题、持续迭代的试错韧性，这是远比做对一道题更宝贵的能力。</p>
+<p>📌 <strong>家长下一步</strong>：
+1.  <strong>协助注册账号</strong>：帮孩子在 <a href="https://www.luogu.com.cn/">luogu.com.cn</a> 上注册一个账号，并将用户名告知教练，以便加入统一管理或跟踪。
+2.  <strong>约定固定练习时间</strong>：与孩子商定每周 2-3 次、每次 1 小时左右的不受干扰的“编程时间”，形成规律，减少启动阻力。
+3.  <strong>扮演“学生”角色</strong>：在孩子完成题目后，家长可以请他/她当小老师，用中文讲解一次解题思路。这能极好地检验孩子的真实理解程度，并锻炼其逻辑表达能力。</p>
+    </div>
+
+</body>
+</html>
