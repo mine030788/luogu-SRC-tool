@@ -1,0 +1,69 @@
+# Git
+.git
+.github
+.gitignore
+.gitattributes
+
+# 大文件 / 数据 / 缓存
+reports/
+.source_cache/
+tasks.db
+tasks.db-*
+*.db
+*.sqlite
+*.sqlite3
+assets/cached_fonts/
+.cache/
+
+# 本地数据 / 凭据
+.env
+.env.local
+.env.*.local
+cookies.json
+*cookies*.json
+luogu_export.json
+
+# 历史报告样本（不要进镜像）
+report_public.pdf
+report_text.txt
+GESP考纲.pdf
+GESP考纲.pdf.txt
+NOI大纲_Syllabus_Edition_2025.pdf
+NOI大纲_Syllabus_Edition_2025.pdf.txt
+
+# 调试输出
+.dbg/
+
+# 文档 / 测试 / CI（保留到运行时意义不大）
+docs/
+tests/
+README.md
+LICENSE
+*.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# 同步脚本（不要进镜像）
+sync_upstream.py
+DEPLOYMENT_GUIDE.md
+
+# 报告 / 输出
+luogu_coach_report.*
+luogu_coach_report*.pdf
+luogu_coach_report*.md
+luogu_coach_report*.html
