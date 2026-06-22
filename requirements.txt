@@ -1,0 +1,13 @@
+# luogu-toolkit 核心依赖
+playwright>=1.45
+ddddocr>=1.5
+
+# 完整功能
+pyLuogu>=1.0
+httpx>=0.27
+beautifulsoup4>=4.12
+flask>=3.0
+
+# 开发
+pytest>=7.0
+ruff>=0.1
