@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>洛谷工具集 · 打包报告数据 (luogu-toolkit)</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfeff 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 24px;
+            color: #1f2937;
+        }
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+        }
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, .06);
+            padding: 32px;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: #064e3b;
+            margin: 0 0 6px;
+        }
+        .sub {
+            color: #0f766e;
+            margin: 0 0 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 700;
+            background: #ecfdf5;
+            color: #065f46;
+            margin-right: 6px;
+        }
+        .tag-purple { background: #f3e8ff; color: #6b21a8; }
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: #374151;
+            margin: 14px 0 6px;
+        }
+        input[type="number"], input[type="text"] {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            border-radius: 10px;
+            border: 1px solid #d1d5db;
+            padding: 10px 12px;
+            font-size: 14px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, .2);
+        }
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            margin-top: 24px;
+            border-radius: 10px;
+            padding: 12px 18px;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            border: 0;
+            background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+            color: #fff;
+            transition: all .15s ease;
+        }
+        .btn:hover {
+            background: linear-gradient(135deg, #047857 0%, #0f766e 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(5, 150, 105, .3);
+        }
+        .btn:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+        .btn-amber {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        .btn-amber:hover {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+        }
+        .progress {
+            margin-top: 18px;
+            display: none;
+        }
+        .progress.show { display: block; }
+        .progress-bar {
+            width: 100%;
+            background: #e5e7eb;
+            border-radius: 9999px;
+            height: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #0d9488);
+            transition: width .4s ease;
+            width: 0;
+        }
+        .progress-msg {
+            margin-top: 6px;
+            font-size: 12px;
+            color: #6b7280;
+            font-family: ui-monospace, monospace;
+        }
+        .result {
+            margin-top: 18px;
+            display: none;
+        }
+        .result.show { display: block; }
+        .box {
+            border-radius: 10px;
+            padding: 12px;
+            border: 1px solid;
+        }
+        .box-green { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
+        .box-red { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+        .box-blue { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+        code { font-family: ui-monospace, monospace; }
+        .hint {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+        a.link { color: #047857; text-decoration: none; font-weight: 600; }
+        a.link:hover { text-decoration: underline; }
+        .nav {
+            margin-bottom: 14px;
+            font-size: 13px;
+        }
+        .nav a { color: #047857; text-decoration: none; margin-right: 14px; }
+        .nav a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="nav">
+                <a href="/">← 回到首页</a>
+                <a href="/data">查看抓取数据</a>
+            </div>
+            <h1>📦 打包报告数据</h1>
+            <p class="sub">
+                <span class="tag">luogu-toolkit</span>
+                <span class="tag tag-purple">→ luogu-report-generator</span>
+                抓取你的洛谷做题数据, 打成 ZIP 供报告生成器使用
+            </p>
+
+            <div class="box box-blue" style="margin: 0 0 18px; font-size: 13px;">
+                ℹ️ <strong>使用流程</strong>: 在本页打包 → 下载 ZIP → 到
+                <code>luogu-report-generator</code> 上传 → 选择模型 → 生成 PDF/HTML 报告。<br>
+                两个项目完全解耦, 本工具不接触你的 OpenAI Key, 报告端也不接触你的洛谷 cookies。
+            </div>
+
+            <div class="row">
+                <div>
+                    <label>已通过题数</label>
+                    <input type="number" id="max_passed" value="30" min="1" max="200">
+                    <div class="hint">建议 30-100</div>
+                </div>
+                <div>
+                    <label>未通过题数</label>
+                    <input type="number" id="max_failed" value="10" min="0" max="100">
+                    <div class="hint">0 表示不抓</div>
+                </div>
+                <div>
+                    <label>每题翻 record</label>
+                    <input type="number" id="records_per_problem" value="3" min="1" max="10">
+                    <div class="hint">找 AC 那条</div>
+                </div>
+            </div>
+
+            <label>本地代码目录 (可选, 离线场景补全 sourceCode)</label>
+            <input type="text" id="code_dir" placeholder="例如 D:\\codes 或留空">
+
+            <button class="btn" id="btn-build" onclick="buildBundle()">
+                📦 打包报告数据 (生成 ZIP)
+            </button>
+
+            <div class="progress" id="progress">
+                <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+                <div class="progress-msg" id="progress-msg">准备中...</div>
+            </div>
+
+            <div class="result" id="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const stages = {
+            init: '🔑 校验 cookies',
+            practice: '📋 拉取做题记录',
+            failed: '❌ 扫描失败题',
+            passed_items: '✅ 抓取已通过题源码',
+            failed_items: '❌ 抓取失败题源码',
+            behavior: '📊 行为分析',
+            scores: '🎯 六维评分',
+            syllabus: '📚 大纲对标',
+            done: '🎉 打包中',
+        };
+
+        function setProgress(stage, current, total, message) {
+            const fill = document.getElementById('progress-fill');
+            const msg = document.getElementById('progress-msg');
+            document.getElementById('progress').classList.add('show');
+            const pct = total > 0 ? Math.min(100, Math.round(current / total * 100)) : 0;
+            if (stage === 'done') {
+                fill.style.width = '100%';
+            } else if (stage === 'init' || stage === 'practice' || stage === 'failed' || stage === 'behavior' || stage === 'scores' || stage === 'syllabus') {
+                fill.style.width = '30%';
+            } else {
+                fill.style.width = (30 + pct * 0.7) + '%';
+            }
+            const stageLabel = stages[stage] || stage;
+            msg.textContent = `[${stageLabel}] ${current}/${total} ${message || ''}`;
+        }
+
+        function showResult(ok, html) {
+            const r = document.getElementById('result');
+            r.className = 'result show';
+            r.innerHTML = html;
+        }
+
+        function fmtSize(b) {
+            if (b > 1024 * 1024) return (b / 1024 / 1024).toFixed(2) + ' MB';
+            if (b > 1024) return (b / 1024).toFixed(1) + ' KB';
+            return b + ' B';
+        }
+
+        function buildBundle() {
+            const btn = document.getElementById('btn-build');
+            btn.disabled = true;
+            btn.textContent = '⏳ 打包中...';
+            document.getElementById('progress').classList.add('show');
+            document.getElementById('progress-fill').style.width = '10%';
+            document.getElementById('progress-msg').textContent = '启动中...';
+            document.getElementById('result').classList.remove('show');
+
+            const params = new URLSearchParams({
+                max_passed: document.getElementById('max_passed').value,
+                max_failed: document.getElementById('max_failed').value,
+                records_per_problem: document.getElementById('records_per_problem').value,
+            });
+            const codeDir = document.getElementById('code_dir').value.trim();
+            if (codeDir) params.set('code_dir', codeDir);
+
+            // 先做一次 verify, 确认 cookies 有效
+            fetch('/api/verify').then(r => r.json()).then(v => {
+                if (!v.ok) {
+                    showResult(false, `<div class="box box-red">❌ Cookies 失效: ${v.error || v.message}<br>请先到 <a class="link" href="/login">登录页</a> 重新登录。</div>`);
+                    btn.disabled = false;
+                    btn.textContent = '📦 打包报告数据 (生成 ZIP)';
+                    return null;
+                }
+                setProgress('init', 0, 0, `已登录为 ${v.name || v.username || v.uid}`);
+                // 然后调 build
+                return fetch('/api/bundle/build?' + params.toString(), { method: 'POST' });
+            }).then(r => r ? r.json() : null).then(j => {
+                if (!j) return;
+                if (!j.ok) {
+                    showResult(false, `<div class="box box-red">❌ 打包失败: ${j.error || ''}<br>${j.message || ''}<br>${j.fix ? '💡 ' + j.fix : ''}</div>`);
+                    return;
+                }
+                setProgress('done', 1, 1, '完成');
+                showResult(true, `
+                    <div class="box box-green">
+                        ✅ <strong>打包完成</strong><br>
+                        文件: <code>${j.filename}</code><br>
+                        大小: ${fmtSize(j.size_bytes)}<br>
+                        <a class="link" href="${j.download_url}">⬇️ 立即下载</a>
+                        &nbsp;|&nbsp;
+                        <button class="btn btn-amber" style="margin-top: 0; padding: 6px 12px; font-size: 13px; width: auto; display: inline-block;"
+                            onclick="navigator.clipboard.writeText(window.location.origin + '${j.download_url}')">📋 复制下载链接</button>
+                    </div>
+                    <div class="box box-blue" style="margin-top: 10px; font-size: 13px;">
+                        <strong>下一步</strong>: 把下载的 ZIP 拖到 <code>luogu-report-generator</code> 上传页 →
+                        填 OpenAI Key → 生成 PDF 报告。
+                    </div>
+                `);
+            }).catch(e => {
+                showResult(false, `<div class="box box-red">❌ 网络错误: ${e.message || e}</div>`);
+            }).finally(() => {
+                btn.disabled = false;
+                btn.textContent = '📦 重新打包';
+            });
+        }
+    </script>
+</body>
+</html>

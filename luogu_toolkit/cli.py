@@ -4,6 +4,7 @@
   login       密码登录 (Playwright 自动 OCR + 2FA)
   fetch       抓取数据 (records / user / problem / passed)
   verify      校验当前 cookies 是否有效
+  bundle      把抓取的数据打包成 ZIP (供 luogu-report-generator 消费)
   web         启动本地 Web UI (默认 127.0.0.1:9876)
 
 Examples
@@ -28,6 +29,9 @@ Examples
 
   # 启动本地 Web UI
   luogu-toolkit web --port 9876
+
+  # 把数据打包成 ZIP (供 luogu-report-generator 使用)
+  luogu-toolkit bundle --output-dir . --max-passed 30 --max-failed 10
 """
 from __future__ import annotations
 
@@ -208,6 +212,50 @@ def cmd_web(args) -> int:
     return 0
 
 
+def cmd_bundle(args) -> int:
+    """把抓取的数据打包成 ZIP, 供 luogu-report-generator 直接消费。"""
+    from .bundle import build_report_zip
+    from .cookie import load_cookies
+
+    def _on_progress(stage: str, current: int, total: int, message: str) -> None:
+        if total > 0:
+            print(f"  [{stage}] {current}/{total} {message}")
+        else:
+            print(f"  [{stage}] {message}")
+
+    try:
+        cookies = load_cookies()
+    except FileNotFoundError as e:
+        print(f"❌ {e}")
+        return 1
+
+    print("📦 开始打包报告数据 (供 luogu-report-generator 使用)...")
+    try:
+        zip_path = build_report_zip(
+            cookies,
+            output_dir=args.output_dir,
+            max_passed=args.max_passed,
+            max_failed=args.max_failed,
+            max_records_per_problem=args.max_records,
+            code_dir=args.code_dir,
+            on_progress=_on_progress,
+        )
+    except Exception as e:
+        print(f"❌ 打包失败: {e}")
+        return 1
+
+    size_kb = zip_path.stat().st_size / 1024
+    print()
+    print(f"✅ 打包完成!")
+    print(f"   文件:   {zip_path}")
+    print(f"   大小:   {size_kb:.1f} KB")
+    print()
+    print("下一步:")
+    print(f"   把这个 ZIP 拖到 luogu-report-generator 的 Web UI, 或:")
+    print(f"   python -m luogu_report_generator.cli --zip {zip_path}")
+    return 0
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         prog="luogu-toolkit",
@@ -263,6 +311,21 @@ def main(argv=None) -> int:
     p_web.add_argument("--port", type=int, default=9876)
     p_web.add_argument("--debug", action="store_true")
     p_web.set_defaults(func=cmd_web)
+
+    # bundle
+    p_bundle = sub.add_parser(
+        "bundle", help="把抓取数据打包成 ZIP (供 luogu-report-generator 消费)")
+    p_bundle.add_argument("--output-dir", default=".",
+                          help="ZIP 输出目录 (默认当前目录)")
+    p_bundle.add_argument("--max-passed", type=int, default=30,
+                          help="最多打包多少道已通过的题 (默认 30)")
+    p_bundle.add_argument("--max-failed", type=int, default=10,
+                          help="最多打包多少道失败/未通过的题 (默认 10)")
+    p_bundle.add_argument("--max-records", type=int, default=3,
+                          help="每题最多翻多少条 record 找源码 (默认 3)")
+    p_bundle.add_argument("--code-dir", default=None,
+                          help="本地代码目录 (可选, 用于离线补全 sourceCode)")
+    p_bundle.set_defaults(func=cmd_bundle)
 
     args = parser.parse_args(argv)
     return args.func(args)

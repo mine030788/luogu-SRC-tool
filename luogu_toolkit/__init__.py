@@ -36,6 +36,12 @@ from .login import (
     get_login_status,
     cancel_login,
 )
+from .bundle import (
+    BUNDLE_SCHEMA_VERSION,
+    build_export_data,
+    build_report_zip,
+    load_export_data_from_zip,
+)
 
 __all__ = [
     "__version__",
@@ -45,4 +51,6 @@ __all__ = [
     "verify_cookies",
     "LoginSession", "LoginSessionManager",
     "login_with_password", "get_login_status", "cancel_login",
+    "BUNDLE_SCHEMA_VERSION", "build_export_data", "build_report_zip",
+    "load_export_data_from_zip",
 ]
