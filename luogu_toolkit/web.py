@@ -81,6 +81,10 @@ def create_app() -> "Flask":
     def data_page():
         return render_template("data.html")
 
+    @app.route("/bundle")
+    def bundle_page():
+        return render_template("bundle.html")
+
     # ── API ──
 
     @app.post("/api/login/start")
@@ -268,6 +272,87 @@ def create_app() -> "Flask":
             zip_buf.getvalue(),
             mimetype="application/zip",
             headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    # ── 一键打包 ZIP (供项目 B luogu-report-generator 消费) ──
+
+    # ZIP 临时目录, 启动时创建一次
+    _bundle_dir = Path(tempfile.gettempdir()) / "luogu_bundles"
+    _bundle_dir.mkdir(parents=True, exist_ok=True)
+
+    @app.post("/api/bundle/build")
+    def api_bundle_build():
+        """同步打包 (依赖前端轮询 setProgress 显示阶段)。
+
+        Query: ?max_passed=&max_failed=&records_per_problem=&code_dir=
+        """
+        from .cookie import load_cookies
+        from .bundle import build_report_zip
+        try:
+            max_passed = int(request.args.get("max_passed", 30))
+            max_failed = int(request.args.get("max_failed", 10))
+            records_per_problem = int(request.args.get("records_per_problem", 3))
+        except ValueError:
+            return jsonify({"ok": False, "error": "max_passed/max_failed/records_per_problem 必须是整数"}), 400
+        if not (1 <= max_passed <= 200):
+            return jsonify({"ok": False, "error": "max_passed 必须 1-200"}), 400
+        if not (0 <= max_failed <= 100):
+            return jsonify({"ok": False, "error": "max_failed 必须 0-100"}), 400
+        if not (1 <= records_per_problem <= 10):
+            return jsonify({"ok": False, "error": "records_per_problem 必须 1-10"}), 400
+        code_dir = (request.args.get("code_dir") or "").strip() or None
+
+        try:
+            cookies = load_cookies()
+        except FileNotFoundError as e:
+            return jsonify({"ok": False, "error": str(e),
+                            "fix": "请先到 /login 登录或手动填 cookies"}), 404
+        except ValueError as e:
+            return jsonify({"ok": False, "error": f"cookies 文件格式错误: {e}"}), 400
+
+        try:
+            zip_path = build_report_zip(
+                cookies,
+                output_dir=str(_bundle_dir),
+                max_passed=max_passed,
+                max_failed=max_failed,
+                max_records_per_problem=records_per_problem,
+                code_dir=code_dir,
+            )
+        except Exception as e:
+            logger.exception("build_report_zip failed")
+            return _err_payload(e,
+                hint="pip install --force-reinstall luogu-toolkit")
+
+        size = zip_path.stat().st_size
+        logger.info("Built bundle: %s (%d bytes)", zip_path.name, size)
+        return jsonify({
+            "ok": True,
+            "filename": zip_path.name,
+            "size_bytes": size,
+            "download_url": f"/api/bundle/download/{zip_path.name}",
+        })
+
+    @app.get("/api/bundle/download/<path:filename>")
+    def api_bundle_download(filename):
+        """下载打包好的 ZIP (防穿越: 只允许 _bundle_dir 下的 .zip)。"""
+        # 安全: 禁止 .. 和 路径分隔符
+        if "/" in filename or "\\" in filename or ".." in filename or not filename.endswith(".zip"):
+            return jsonify({"ok": False, "error": "非法文件名"}), 400
+        zp = (_bundle_dir / filename).resolve()
+        try:
+            zp.relative_to(_bundle_dir.resolve())
+        except ValueError:
+            return jsonify({"ok": False, "error": "路径越界"}), 400
+        if not zp.exists() or not zp.is_file():
+            return jsonify({"ok": False, "error": "文件不存在或已过期",
+                            "fix": "重新打一次"}), 404
+        data = zp.read_bytes()
+        return Response(
+            data,
+            mimetype="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"',
+                     "Content-Length": str(len(data))},
         )
 
     return app
