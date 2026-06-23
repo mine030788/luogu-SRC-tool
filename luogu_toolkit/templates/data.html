@@ -60,26 +60,12 @@
             <div class="p-5 bg-purple-50 rounded-xl border-2 border-purple-200">
                 <div class="flex items-center gap-2 mb-1">
                     <div class="text-2xl">📦</div>
-                    <h3 class="font-bold text-slate-800">打包报告数据</h3>
+                    <h3 class="font-bold text-slate-800">打包数据</h3>
                     <span class="px-2 py-0.5 bg-purple-200 text-purple-800 text-xs font-bold rounded">v0.1</span>
                 </div>
-                <p class="text-xs text-slate-600 mt-1 mb-3">把做题数据打成 ZIP, 拖到 <code class="bg-purple-100 px-1 rounded">luogu-report-generator</code> 生成 AI 报告</p>
-                <div class="grid grid-cols-3 gap-2 text-xs text-slate-600 mb-3">
-                    <label class="flex flex-col gap-0.5">
-                        <span>通过题数</span>
-                        <input id="bundle-passed" type="number" min="1" max="200" value="30" class="w-full px-1 py-1 border rounded text-center text-sm">
-                    </label>
-                    <label class="flex flex-col gap-0.5">
-                        <span>未通过</span>
-                        <input id="bundle-failed" type="number" min="0" max="100" value="10" class="w-full px-1 py-1 border rounded text-center text-sm">
-                    </label>
-                    <label class="flex flex-col gap-0.5">
-                        <span>每题 records</span>
-                        <input id="bundle-rpp" type="number" min="1" max="10" value="3" class="w-full px-1 py-1 border rounded text-center text-sm">
-                    </label>
-                </div>
+                <p class="text-xs text-slate-600 mt-1 mb-3">把通过题 / 失败题 / 做题记录全部打成 ZIP, 默认打包全部</p>
                 <button onclick="buildBundle()" id="bundleBtn" class="w-full px-3 py-2 bg-purple-600 text-white rounded text-sm font-bold hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                    📦 打包并下载 ZIP
+                    📦 打包数据
                 </button>
                 <p class="text-xs text-slate-500 mt-2">⚠️ 同步调用, 取决于数据量可能要等十几秒到几分钟</p>
             </div>
@@ -176,12 +162,13 @@
             btn.textContent = '⏳ 打包中…';
             r.classList.remove('hidden');
             pre.textContent = '⏳ 后端正在拉数据 + 抓源码 + 打 ZIP, 取决于数据量可能要等十几秒到几分钟…';
-            title.textContent = '⏳ 打包报告数据';
+            title.textContent = '⏳ 打包数据';
             meta.textContent = '';
+            // 默认打包全部: 200 通过 + 100 失败 + 10 records/题 (web.py 已限制 1-200 / 0-100 / 1-10)
             const params = new URLSearchParams({
-                max_passed: document.getElementById('bundle-passed').value || 30,
-                max_failed: document.getElementById('bundle-failed').value || 10,
-                records_per_problem: document.getElementById('bundle-rpp').value || 3,
+                max_passed: 200,
+                max_failed: 100,
+                records_per_problem: 10,
             });
             try {
                 const resp = await fetch('/api/bundle/build?' + params.toString(), { method: 'POST' });
@@ -201,8 +188,7 @@
                     '✅ <strong>打包完成</strong><br>' +
                     '文件: <code>' + j.filename + '</code><br>' +
                     '大小: ' + (j.size_bytes / 1024).toFixed(1) + ' KB<br><br>' +
-                    '<a class="text-indigo-600 underline font-bold" href="' + j.download_url + '">⬇️ 立即下载 ZIP</a>' +
-                    '<br><br><span class="text-xs text-slate-500">下一步: 把 ZIP 拖到 <code>luogu-report-generator</code> 上传页 → 填 OpenAI Key → 生成 PDF 报告</span>';
+                    '<a class="text-indigo-600 underline font-bold" href="' + j.download_url + '">⬇️ 立即下载 ZIP</a>';
                 // 自动触发下载
                 const a = document.createElement('a');
                 a.href = j.download_url;
