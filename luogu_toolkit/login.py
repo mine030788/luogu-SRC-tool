@@ -36,6 +36,8 @@ MAX_CAPTCHA_AUTO = int(os.environ.get("PWD_LOGIN_MAX_CAPTCHA", "6"))
 SESSION_TTL = int(os.environ.get("PWD_LOGIN_TTL", "300"))  # 5 分钟
 PWD_LOGIN_USE_CHROME = os.environ.get("PWD_LOGIN_USE_CHROME", "1") == "1"
 PWD_LOGIN_HEADLESS = os.environ.get("PWD_LOGIN_HEADLESS", "new")
+# 手动接管: OCR 失败时把浏览器留给你自己填验证码 (默认关闭)
+MANUAL_FALLBACK = os.environ.get("PWD_LOGIN_MANUAL_FALLBACK", "0") == "1"
 
 # ── ddddocr 单例 (启动期导入, OCR 引擎 ≈ 30MB) ──
 _OCR = None
@@ -220,6 +222,36 @@ class LoginSession:
 
                 # --- Step 3: OCR 验证码 + 提交 (重试) ---
                 if not self._try_login_with_captcha(page, max_attempts=MAX_CAPTCHA_AUTO):
+                    # 手动接管模式: 浏览器保持打开, 让用户自己填验证码
+                    if MANUAL_FALLBACK:
+                        self._set_msg(
+                            f"OCR 失败 {MAX_CAPTCHA_AUTO} 次 — 浏览器已留给你手动接管, "
+                            "填完验证码后点『完成』, 工具会继续抓 cookies"
+                        )
+                        self._wait_for_user_handoff(page)
+                        # 用户手动完成后, 再走 2FA 检测 + C3VK 抓取
+                        time.sleep(2)
+                        html = page.content()
+                        if self._looks_like_2fa(html):
+                            self._set_need_2fa()
+                            return
+                        if self._looks_like_login_error(html):
+                            err = self._extract_swal_text(html) or "登录失败"
+                            self._fail(err)
+                            return
+                        self._set_msg("手动接管完成, 正在抓 cookies…")
+                        for u in [
+                            "https://www.luogu.com.cn/",
+                            "https://www.luogu.com.cn/user/settings",
+                            "https://www.luogu.com.cn/record/list",
+                        ]:
+                            try:
+                                page.goto(u, wait_until="domcontentloaded", timeout=15000)
+                                time.sleep(1.0)
+                            except Exception:
+                                pass
+                        self._extract_and_done(page)
+                        return
                     return
 
                 # --- Step 4: 检测结果 ---
@@ -367,7 +399,15 @@ class LoginSession:
                 self._fail(err)
                 return False
             return True
-        self._fail(f"自动识别图形验证码连续 {max_attempts} 次失败, 请联系管理员")
+        # OCR 全部失败 — 引导用户走手动接管或手动填 cookies
+        self._fail(
+            f"自动识别图形验证码连续 {max_attempts} 次失败 "
+            "(洛谷验证码可能换类型了). 两种救生圈:\n"
+            "  ① 重启 web 时设 PWD_LOGIN_MANUAL_FALLBACK=1, "
+            "浏览器会一直开着, 把验证码控制权交给你\n"
+            "  ② 直接到 /login 用『方式 B · 手动填 cookies』"
+            "粘贴 3 个 cookie 即可跳过验证码"
+        )
         return False
 
     def _looks_like_2fa(self, html: str) -> bool:
@@ -381,6 +421,42 @@ class LoginSession:
         return any(k in html for k in (
             "账号或密码错误", "密码错误", "用户不存在", "账号不存在",
         ))
+
+    def _wait_for_user_handoff(self, page, max_wait: int = 300) -> None:
+        """OCR 失败后, 把浏览器留给用户自己填验证码.
+
+        判定"用户已完成"的条件 (满足任一即认为完成):
+          - URL 离开了 /auth/login (登录成功跳转)
+          - 页面出现两步验证提示
+        """
+        self._set_msg(
+            f"⏳ 浏览器已留在你眼前, 手动填完验证码点登录. "
+            f"最长等 {max_wait} 秒…"
+        )
+        # 先把 headless 关掉, 弹个真窗口出来
+        try:
+            page.bring_to_front()
+        except Exception:
+            pass
+        deadline = time.time() + max_wait
+        while time.time() < deadline:
+            time.sleep(2)
+            if self.state in ("done", "failed", "expired"):
+                return
+            try:
+                url = page.url
+            except Exception:
+                continue
+            if "/auth/login" not in url:
+                # 已经跳走 — 让外层流程抓 cookies
+                return
+            try:
+                html = page.content()
+            except Exception:
+                continue
+            if self._looks_like_2fa(html):
+                return
+        self._fail(f"手动接管超时 ({max_wait} 秒), 自动放弃")
 
     def _extract_swal_text(self, html: str) -> str:
         m = re.search(r'class="swal2-html-container"[^>]*>([^<]+)<', html)

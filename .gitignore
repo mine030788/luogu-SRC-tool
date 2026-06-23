@@ -20,6 +20,10 @@ env/
 .vscode/
 *.swp
 
+# 本地启动脚本 (强依赖本机 Python 路径, 不该污染项目)
+restart-web.ps1
+restart-web.bat
+
 # 测试
 .pytest_cache/
 .coverage

@@ -36,9 +36,16 @@
         </div>
 
         <!-- 模式 2: 手动填 cookies -->
-        <div id="manual" class="border-2 border-emerald-200 rounded-xl p-5">
-            <h2 class="text-lg font-bold text-emerald-800 mb-3">方式 B · 手动填 cookies</h2>
-            <p class="text-xs text-slate-500 mb-3">打开 <a href="https://www.luogu.com.cn" target="_blank" class="text-indigo-600 hover:underline">luogu.com.cn</a> → F12 → Application → Cookies → 复制三个值</p>
+        <div id="manual" class="border-2 border-emerald-200 rounded-xl p-5 scroll-mt-6">
+            <div class="flex items-center gap-2 mb-3">
+                <h2 class="text-lg font-bold text-emerald-800">方式 B · 手动填 cookies</h2>
+                <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">保底方案</span>
+                <span class="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-bold rounded-full">跳过验证码</span>
+            </div>
+            <p class="text-xs text-slate-500 mb-3">
+                打开 <a href="https://www.luogu.com.cn" target="_blank" class="text-indigo-600 hover:underline">luogu.com.cn</a> → F12 → Application → Cookies → 复制三个值.
+                <span class="text-emerald-700 font-bold">3 秒搞定, 不用输密码也不用解验证码.</span>
+            </p>
             <form id="cookieForm" class="space-y-3">
                 <input name="client_id" type="text" required
                        placeholder="__client_id (从浏览器 cookie 复制)"
