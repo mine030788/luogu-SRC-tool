@@ -25,7 +25,7 @@ export_data 包含字段 (报告生成必需的):
     from luogu_toolkit.bundle import build_report_zip
     cookies = load_cookies()
     zip_path = build_report_zip(cookies, output_dir=".", max_passed=10, max_failed=5)
-    # → 落盘 luogu-report-<uid>-<ts>.zip, 返回路径
+    # → 落盘 luogu-SRC-<uid>-<ts>.zip, 返回路径
 
 调用方式 (CLI):
     luogu-toolkit bundle --output ./
@@ -910,7 +910,7 @@ def build_report_zip(
     cookies: Optional[CookieDict] = None,
     *,
     output_dir: str = ".",
-    filename_prefix: str = "luogu-report",
+    filename_prefix: str = "luogu-SRC",
     max_passed: int = 30,
     max_failed: int = 10,
     max_records_per_problem: int = 3,
