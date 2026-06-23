@@ -81,10 +81,6 @@ def create_app() -> "Flask":
     def data_page():
         return render_template("data.html")
 
-    @app.route("/bundle")
-    def bundle_page():
-        return render_template("bundle.html")
-
     # ── API ──
 
     @app.post("/api/login/start")
