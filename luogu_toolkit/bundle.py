@@ -504,10 +504,17 @@ def _index_local_code(code_dir: Optional[str]) -> Dict[str, Dict[str, Any]]:
 
 
 def _build_summary(problems: List[Any], tag_by_id: Dict[int, Dict[str, Any]]) -> Dict[str, Any]:
-    """简化版 summary (难度直方图 + top_algorithm_tags + top_tags + level_experience)"""
+    """简化版 summary (难度直方图 + top_algorithm_tags + top_tags + level_experience)
+
+    v3.9.78 · 4 道题知识点全空白修复：
+    旧逻辑只统计 type==2 的算法标签，4 道题若没有 algorithm-type 标签，
+    top_algorithm_tags 为空 → 知识点覆盖全 0。增加 fallback_tag_counter，
+    把 type=1（功能/分类）+ type=2（算法）都纳入对标范围。
+    """
     difficulty_counter: Counter = Counter()
     tag_counter: Counter = Counter()
     algorithm_tag_counter: Counter = Counter()
+    fallback_tag_counter: Counter = Counter()  # v3.9.78 · type in {1,2}
     tag_type_counter: Counter = Counter()
 
     for p in problems:
@@ -522,9 +529,17 @@ def _build_summary(problems: List[Any], tag_by_id: Dict[int, Dict[str, Any]]) ->
                 tag_type_counter[int(ttype)] += 1
                 if int(ttype) == 2:
                     algorithm_tag_counter[int(tag_id)] += 1
+                # v3.9.78 · 兜底：type=1（功能/分类）和 type=2（算法）都属于"可对标知识点"范围
+                if int(ttype) in (1, 2):
+                    fallback_tag_counter[int(tag_id)] += 1
 
     top_tags = sorted(tag_counter.items(), key=lambda x: x[1], reverse=True)[:30]
-    top_algorithm_tags = sorted(algorithm_tag_counter.items(), key=lambda x: x[1], reverse=True)[:30]
+    # v3.9.78 · 知识点对标用：优先 algorithm-type，回退到 type in {1,2}
+    if algorithm_tag_counter:
+        _src = algorithm_tag_counter
+    else:
+        _src = fallback_tag_counter
+    top_algorithm_tags = sorted(_src.items(), key=lambda x: x[1], reverse=True)[:30]
 
     def _name(tid: int) -> str:
         return tag_by_id.get(tid, {}).get("name", f"#{tid}")
