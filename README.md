@@ -346,6 +346,10 @@ MIT — 详见 [LICENSE](LICENSE) 文件。
 - [Playwright](https://playwright.dev/python/) — 浏览器自动化
 - [ddddocr](https://github.com/sml2h3/ddddocr) — 图形验证码 OCR
 
+## 💬 联系
+
+- Telegram 交流群: [https://t.me/+Q4h6R9iM5F80NDEy](https://t.me/+Q4h6R9iM5F80NDEy)
+
 ---
 
 **免责声明**: 本工具仅供学习与个人数据备份使用, 请遵守洛谷用户协议。
