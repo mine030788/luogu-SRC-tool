@@ -3,9 +3,16 @@ NOI 大纲知识点对标模块
 实现五级分类（精通/熟练/入门/初窥/空白）和覆盖率统计
 """
 
-from pathlib import Path
 import re
+from pathlib import Path
 from typing import Any
+
+# v3.9.43 修复：洛谷 `/_lfe/tags` 返回的标签名是带空格的（如 "树形 DP" id=152、
+# "区间 DP" id=144、"数位 DP" id=141、"插头 DP" 等），原关键词 "树形dp" / "区间dp"
+# 等无空格写法做子串匹配时永远为 False，导致这些知识点在用户报告里被误判为 🔴 空白
+# （UID 1490150 反馈的"树形DP/区间DP 已练过却空白"就是这个原因）。
+# 在匹配前先把两边空白全部去掉（再 casefold），兼容 "树形DP" / "树形 DP" / "树形  dp" / "树形 dp" 等所有写法。
+_WS_PATTERN = re.compile(r"\s+")
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 SYLLABUS_2025_PDF = PROJECT_ROOT / "NOI大纲_Syllabus_Edition_2025.pdf"
@@ -358,10 +365,23 @@ def load_syllabus_context(max_chars: int = 20000) -> dict[str, Any]:
 
 
 def _match_topic(tag_name: str, keywords: list[str]) -> bool:
-    """检查标签名是否匹配知识点的关键词"""
-    tag_lower = tag_name.lower()
+    """检查标签名是否匹配知识点的关键词。
+
+    v3.9.43：洛谷标签经常带空格（如 "树形 DP"），而我们的关键词是无空格小写形式
+    （"树形dp"），直接子串匹配会漏。先把两边所有空白字符（空格、xa0 不间断空格、
+    中文空格等）全部去掉，再 casefold 做子串匹配，兼容 "树形DP" / "树形 DP" /
+    "树形  dp" 等所有写法。
+    """
+    if not tag_name or not keywords:
+        return False
+    tag_norm = _WS_PATTERN.sub("", str(tag_name)).casefold()
+    if not tag_norm:
+        return False
     for kw in keywords:
-        if kw.lower() in tag_lower:
+        if not kw:
+            continue
+        kw_norm = _WS_PATTERN.sub("", str(kw)).casefold()
+        if kw_norm and kw_norm in tag_norm:
             return True
     return False
 
