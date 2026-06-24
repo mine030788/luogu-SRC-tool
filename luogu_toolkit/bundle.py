@@ -44,6 +44,7 @@ from typing import Any, Dict, List, Optional
 from collections import Counter, defaultdict
 
 from .cookie import CookieDict, load_cookies
+from .syllabus_matcher import evaluate_all_topics
 
 logger = logging.getLogger("luogu_toolkit.bundle")
 
@@ -410,74 +411,6 @@ def _compute_six_dimension_scores(export_data: Dict[str, Any], behavior_data: Di
         "数学": max(20, min(95, score_math + adjustment)),
     }
 
-
-# ═══════════════════════════════════════════════════════════════════════
-#  大纲知识点对标 (精简版, 不读 PDF, 只用关键词匹配)
-# ═══════════════════════════════════════════════════════════════════════
-
-_CSP_J_TOPICS = {
-    "枚举法": ["枚举"], "模拟法": ["模拟"], "贪心法": ["贪心"], "递推法": ["递推"],
-    "递归法": ["递归"], "二分法": ["二分"], "倍增法": ["倍增"], "前缀和": ["前缀和"],
-    "差分": ["差分"], "排序": ["排序"], "DFS": ["dfs", "深度优先"], "BFS": ["bfs", "广度优先"],
-    "DP基础": ["dp", "动态规划"], "背包DP": ["背包"], "区间DP": ["区间dp"],
-    "图遍历": ["图遍历", "图的遍历"], "链表": ["链表"], "栈": ["栈"], "队列": ["队列"],
-    "二叉树遍历": ["二叉树"], "哈夫曼树": ["哈夫曼"], "BST": ["二叉搜索树", "bst"],
-    "GCD": ["gcd", "最大公约数"], "素数筛法": ["筛法", "素数", "质数"],
-    "排列组合": ["排列", "组合"], "进制转换": ["进制"],
-}
-
-_CSP_S_TOPICS = {
-    "并查集": ["并查集"], "树状数组": ["树状数组", "bit"], "线段树": ["线段树"],
-    "ST表": ["st表", "稀疏表"], "单调栈/队列": ["单调栈", "单调队列"],
-    "最短路": ["最短路", "dijkstra", "spfa", "floyd"], "最小生成树": ["最小生成树", "kruskal", "prim"],
-    "拓扑排序": ["拓扑"], "强连通分量": ["强连通", "tarjan"], "LCA": ["lca"],
-    "网络流": ["网络流", "dinic", "最大流"], "二分图匹配": ["二分图", "匹配"],
-    "区间DP": ["区间dp"], "树形DP": ["树形dp"], "状压DP": ["状压dp"],
-    "数位DP": ["数位dp"], "KMP": ["kmp"], "字符串Hash": ["hash"],
-    "字典树": ["trie", "字典树"], "矩阵快速幂": ["矩阵", "快速幂"],
-    "组合数学": ["组合数学", "组合"], "概率期望": ["概率", "期望"],
-}
-
-
-def _evaluate_syllabus(top_tags: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
-    """精简版大纲对标, 返回 {topic: {covered, level, count, stats, details}}"""
-    tag_counts: Dict[str, int] = {}
-    for item in top_tags:
-        name = str(item.get("name") or "").lower()
-        count = int(item.get("count", 0))
-        if name:
-            tag_counts[name] = count
-
-    result: Dict[str, Dict[str, Any]] = {}
-    for topic, keywords in {**{"[CSP-J] " + k: v for k, v in _CSP_J_TOPICS.items()},
-                             **{"[CSP-S] " + k: v for k, v in _CSP_S_TOPICS.items()}}.items():
-        matched = []
-        for kw in keywords:
-            kw_low = kw.lower()
-            for tag_name, count in tag_counts.items():
-                if kw_low in tag_name:
-                    matched.append({"tag": tag_name, "count": count, "matched_keyword": kw})
-        total_count = sum(m["count"] for m in matched)
-        if total_count >= 30:
-            level = "精通"
-        elif total_count >= 15:
-            level = "熟练"
-        elif total_count >= 5:
-            level = "入门"
-        elif total_count >= 1:
-            level = "初窥"
-        else:
-            level = "空白"
-        result[topic] = {
-            "covered": total_count > 0,
-            "level": level,
-            "count": total_count,
-            "stats": {"total_count": total_count, "matched_tags": len(matched)},
-            "details": matched[:5],
-        }
-    return result
-
-
 # ═══════════════════════════════════════════════════════════════════════
 #  主流程: build_export_data + build_report_zip
 # ═══════════════════════════════════════════════════════════════════════
@@ -813,6 +746,26 @@ def build_export_data(
     # 7. summary
     summary = _build_summary(all_passed, tag_by_id)
 
+    # 7.5 构造 tag → 题目难度列表 (供 syllabus_matcher 算每个知识点平均难度)
+    tag_difficulty_map: Dict[str, List[int]] = {}
+    for prob in all_passed:
+        d = getattr(prob, "difficulty", None)
+        if d is None or d <= 0:
+            continue
+        try:
+            di = int(d)
+        except (TypeError, ValueError):
+            continue
+        for tag_id in list(getattr(prob, "tags", []) or []):
+            try:
+                tid = int(tag_id)
+            except (TypeError, ValueError):
+                continue
+            tag_name = str(tag_by_id.get(tid, {}).get("name") or "").strip()
+            if not tag_name:
+                continue
+            tag_difficulty_map.setdefault(tag_name, []).append(di)
+
     # 8. detail_fetch_stats (精简)
     detail_fetch_stats = {
         "total": len(passed_items) + len(failed_items),
@@ -862,7 +815,10 @@ def build_export_data(
 
     # 11. syllabus_evaluation
     _p("syllabus", 0, 0, "计算大纲对标")
-    syllabus_evaluation = _evaluate_syllabus(summary.get("top_algorithm_tags", []))
+    syllabus_evaluation = evaluate_all_topics(
+        summary.get("top_algorithm_tags", []) or summary.get("top_tags", []) or [],
+        tag_difficulty_map=tag_difficulty_map,
+    )
 
     # 12. submission_evolution (可选, 默认不抓, 让报告侧兜底)
     submission_evolution: Dict[str, Any] = {
