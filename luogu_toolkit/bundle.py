@@ -503,14 +503,18 @@ def _index_local_code(code_dir: Optional[str]) -> Dict[str, Dict[str, Any]]:
     return index
 
 
-def _build_summary(problems: List[Any], tag_by_id: Dict[int, Dict[str, Any]]) -> Dict[str, Any]:
+def _build_summary(problems: List[Any], tag_by_id: Dict[int, Dict[str, Any]], pid_to_tags: Optional[Dict[str, List[int]]] = None) -> Dict[str, Any]:
     """简化版 summary (难度直方图 + top_algorithm_tags + top_tags + level_experience)
 
     v3.9.78 · 4 道题知识点全空白修复：
     旧逻辑只统计 type==2 的算法标签，4 道题若没有 algorithm-type 标签，
     top_algorithm_tags 为空 → 知识点覆盖全 0。增加 fallback_tag_counter，
     把 type=1（功能/分类）+ type=2（算法）都纳入对标范围。
+
+    v3.9.80 · pyLuogu.ProblemSummary 不接收 tags 字段, getattr(p, 'tags', []) 始终返回 []。
+    强制读 pid_to_tags 形参, 覆盖 getattr 读不到的情况。
     """
+    pid_to_tags = pid_to_tags or {}
     difficulty_counter: Counter = Counter()
     tag_counter: Counter = Counter()
     algorithm_tag_counter: Counter = Counter()
@@ -521,7 +525,10 @@ def _build_summary(problems: List[Any], tag_by_id: Dict[int, Dict[str, Any]]) ->
         d = getattr(p, "difficulty", None)
         if d is not None:
             difficulty_counter[int(d)] += 1
-        for tag_id in list(getattr(p, "tags", []) or []):
+        # v3.9.80 · 优先用 pid_to_tags 覆盖, 避免 pyLuogu.ProblemSummary 丢 tags
+        _pid = str(getattr(p, "pid", "") or "")
+        _tags = pid_to_tags.get(_pid) or list(getattr(p, "tags", []) or [])
+        for tag_id in _tags:
             tag_counter[int(tag_id)] += 1
             tag = tag_by_id.get(int(tag_id), {})
             ttype = tag.get("type")
@@ -737,8 +744,12 @@ def build_export_data(
                 record["sourceCode"] = content
                 record["_source"] = "local"
 
+        # v3.9.80 · pyLuogu.ProblemSummary 不接收 tags 字段, dict() 序列化会丢失
+        # 强制把 v3.9.79 抓到的 tags 覆盖回去
+        prob_dict = _problem_to_json(problem)
+        prob_dict["tags"] = pid_to_tags.get(str(problem.pid), prob_dict.get("tags") or [])
         passed_items.append({
-            "problem": _problem_to_json(problem),
+            "problem": prob_dict,
             "record": record,
             "local_code": local_code,
         })
@@ -784,8 +795,8 @@ def build_export_data(
         })
         time.sleep(0.4)
 
-    # 7. summary
-    summary = _build_summary(all_passed, tag_by_id)
+    # 7. summary (v3.9.80 · 传 pid_to_tags 进去, 避免 ProblemSummary 丢 tags)
+    summary = _build_summary(all_passed, tag_by_id, pid_to_tags=pid_to_tags)
 
     # 7.5 构造 tag → 题目难度列表 (供 syllabus_matcher 算每个知识点平均难度)
     tag_difficulty_map: Dict[str, List[int]] = {}
@@ -797,7 +808,10 @@ def build_export_data(
             di = int(d)
         except (TypeError, ValueError):
             continue
-        for tag_id in list(getattr(prob, "tags", []) or []):
+        # v3.9.80 · 优先用 pid_to_tags 覆盖 ProblemSummary.tags
+        _pid = str(getattr(prob, "pid", "") or "")
+        _tags = pid_to_tags.get(_pid) or list(getattr(prob, "tags", []) or [])
+        for tag_id in _tags:
             try:
                 tid = int(tag_id)
             except (TypeError, ValueError):
