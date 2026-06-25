@@ -611,21 +611,47 @@ def build_export_data(
     passed = raw.get("passed") if isinstance(raw, dict) else None
     solved_problems: List[Any] = []
     if isinstance(passed, list):
-        # 用 _pyluogu.ProblemSummary 包一下保持 schema 一致
+        # v3.9.79 · 抓 practice.passed 时同时调 get_problem(pid) 拿 tags
+        # 之前硬编码 tags=[] 导致 _build_summary 永远拿不到标签, 知识点全空白
+        pid_to_tags: Dict[str, List[int]] = {}
+        pids_to_fetch: List[str] = []
+        for item in passed:
+            if not isinstance(item, dict):
+                continue
+            p = item.get("pid")
+            if p:
+                pids_to_fetch.append(str(p))
+        # 逐题抓 tags, 每 5 题 sleep 1s 避免被洛谷限流
+        for i, pid in enumerate(pids_to_fetch, start=1):
+            _p("practice", i, len(pids_to_fetch), f"抓取 {pid} 的 tags")
+            try:
+                prob = client.get_problem(pid)
+                if prob is not None and getattr(prob, "problem", None) is not None:
+                    raw_tags = getattr(prob.problem, "tags", None) or []
+                    pid_to_tags[pid] = [int(t) for t in raw_tags if t is not None]
+                else:
+                    pid_to_tags[pid] = []
+            except Exception as _exc:
+                logger.warning("get_problem(%s) failed: %s", pid, _exc)
+                pid_to_tags[pid] = []
+            if i % 5 == 0 and i < len(pids_to_fetch):
+                time.sleep(1.0)
+
         for item in passed:
             if not isinstance(item, dict):
                 continue
             pid = item.get("pid")
             if not pid:
                 continue
+            pid_str = str(pid)
             solved_problems.append(_pyluogu.ProblemSummary({
-                "pid": str(pid),
+                "pid": pid_str,
                 "title": item.get("title") or item.get("name") or "",
                 "difficulty": item.get("difficulty"),
                 "type": item.get("type"),
                 "submitted": True,
                 "accepted": True,
-                "tags": [],
+                "tags": pid_to_tags.get(pid_str, []),  # v3.9.79 · 填实际 tags
                 "totalSubmit": None,
                 "totalAccepted": None,
                 "flag": None,
